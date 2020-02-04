@@ -28,7 +28,7 @@ def get_data(param=None,File=None,HEADER=0):
             unpack=False)
 def getstr(string,File):
     """
-    Buscar uma variavel string.
+    Get a string column.
     """
     infile = open(File, 'r')
     firstLine = infile.readline()
@@ -46,7 +46,9 @@ def get_gal_single(ID,band,size=256,file = "galaxies_data_table.csv"):
     x0       = get_data(param='X',File=f)[idx]
     y0       = get_data(param='Y',File=f)[idx]
     ISOarea  = get_data(param='ISOarea',File=f)[idx]
-    file_fits = "STRIPES/"+field+'_'+band+'_swp.fits'
+
+    your_path_do_data = "STRIPES/" #insert the path to data.
+    file_fits = your_path_do_data+field+'_'+band+'_swp.fits'
     print(file_fits)
     hdu = pf.open(file_fits)
     wcs = WCS(hdu[1].header)
@@ -56,7 +58,8 @@ def get_gal_single(ID,band,size=256,file = "galaxies_data_table.csv"):
     hdu[1].header.update(data_cut.wcs.to_header())
     #preserve WCS.
     your_save_path = "your_save_path"
-    pf.writeto(your_save_path+ID+'_'+band+'.fits',data_cut.data, header=hdu[1].header,overwrite=True)
+    pf.writeto(your_save_path+ID+'_'+band+'.fits',data_cut.data, \
+        header=hdu[1].header,overwrite=True)
     # plt.imshow(np.log(data_cut.data))
     # plt.show()
     # return data_cut
@@ -67,7 +70,8 @@ def get_gal_multiple(field,band,file="galaxies_data_table.csv"):
     fields = getstr('#FIELD',f)
     idx = np.where(fields==field)[0]
     try:
-        file_fits = "/mnt/h/data/splus/STRIPES/"+field+'_'+band+'_swp.fits'
+        your_path_do_data = "STRIPES/"
+        file_fits = your_path_do_data+field+'_'+band+'_swp.fits'
         print("Reading File...:", file_fits)
         hdu = pf.open(file_fits)
         wcs = WCS(hdu[1].header)
@@ -80,14 +84,16 @@ def get_gal_multiple(field,band,file="galaxies_data_table.csv"):
             KrRadDet = get_data(param='KrRadDet',File=f)[i]
             A        = get_data(param='A',File=f)[i]
             # size     = int(A*KrRadDet*10)
-            size = int(384)
+            size = int(256)
             print("Image size of >>",size)
-            data_cut = Cutout2D(data, position=(x0,y0), size=(size,size), wcs=wcs)
+            data_cut = Cutout2D(data, position=(x0,y0), size=(size,size), \
+                wcs=wcs)
             hdu[1].data = data_cut.data
             hdu[1].header.update(data_cut.wcs.to_header())
             your_save_path = "your_save_path"
             #preserve WCS.
-            pf.writeto(your_save_path+IDs[i]+'_'+band+'.fits',data_cut.data, header=hdu[1].header,overwrite=True)
+            pf.writeto(your_save_path+IDs[i]+'_'+band+'.fits',data_cut.data, \
+                header=hdu[1].header,overwrite=True)
     except:
         print("Field missing")
     # plt.imshow(np.log(data_cut.data))
