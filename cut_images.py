@@ -1,9 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-"""
-Date = '2020 02 03'
-Geferson Lucatelli
-"""
+# https://nbviewer.jupyter.org/
 from __future__ import division
 import numpy as np
 import astropy.io.fits as pf
@@ -15,7 +12,7 @@ def get_data(param=None,File=None,HEADER=0):
     """
     Get a numerical variable from a table.
 
-    HEADER: if == 1, display the file's header.
+    HEADER: if ==1, display the file's header.
     """
     infile = open(File, 'r')
     firstLine = infile.readline()
@@ -26,6 +23,7 @@ def get_data(param=None,File=None,HEADER=0):
         ind=header.index(param)
         return np.loadtxt(File,usecols=(ind),comments="#", delimiter=",", \
             unpack=False)
+
 def getstr(string,File):
     """
     Get a string column.
@@ -37,68 +35,45 @@ def getstr(string,File):
     return np.loadtxt(File,dtype='str',usecols=(ind),comments="#", \
         delimiter=",", unpack=False)
 
-
-def get_gal_single(ID,band,size=256,file = "galaxies_data_table.csv"):
-    f = file
-    IDs      =getstr('ID',f)
-    idx      =np.where(IDs==ID)[0]
-    field    =getstr('#FIELD',f)[idx][0]
-    x0       = get_data(param='X',File=f)[idx]
-    y0       = get_data(param='Y',File=f)[idx]
-    ISOarea  = get_data(param='ISOarea',File=f)[idx]
-
-    your_path_do_data = "STRIPES/" #insert the path to data.
-    file_fits = your_path_do_data+field+'_'+band+'_swp.fits'
-    print(file_fits)
-    hdu = pf.open(file_fits)
-    wcs = WCS(hdu[1].header)
-    data = hdu[1].data
-    data_cut = Cutout2D(data, position=(x0,y0), size=(size,size), wcs=wcs)
-    hdu[1].data = data_cut.data
-    hdu[1].header.update(data_cut.wcs.to_header())
-    #preserve WCS.
-    your_save_path = "your_save_path"
-    pf.writeto(your_save_path+ID+'_'+band+'.fits',data_cut.data, \
-        header=hdu[1].header,overwrite=True)
-    # plt.imshow(np.log(data_cut.data))
-    # plt.show()
-    # return data_cut
-
-def get_gal_multiple(field,band,file="galaxies_data_table.csv"):
+def get_gal_multiple(field,band,file):
     f = file
     IDs      =getstr('ID',f)
     fields = getstr('#FIELD',f)
     idx = np.where(fields==field)[0]
     try:
+
         your_path_do_data = "STRIPES/"
         file_fits = your_path_do_data+field+'_'+band+'_swp.fits'
+
         print("Reading File...:", file_fits)
-        hdu = pf.open(file_fits)
-        wcs = WCS(hdu[1].header)
+        hdu  = pf.open(file_fits)
+        wcs  = WCS(hdu[1].header)
         data = hdu[1].data
+        x0   = get_data(param='X',File=f)
+        y0   = get_data(param='Y',File=f)
+        # ISOarea  = get_data(param='ISOarea',File=f)
+        # KrRadDet = get_data(param='KrRadDet',File=f)
+        # A        = get_data(param='A',File=f)
+        # field    =getstr('#FIELD',f)[idx][0]
         for i in idx:
             print("Cut task for >> ", IDs[i])
-            x0       = get_data(param='X',File=f)[i]
-            y0       = get_data(param='Y',File=f)[i]
-            ISOarea  = get_data(param='ISOarea',File=f)[i]
-            KrRadDet = get_data(param='KrRadDet',File=f)[i]
-            A        = get_data(param='A',File=f)[i]
-            # size     = int(A*KrRadDet*10)
-            size = int(256)
-            print("Image size of >>",size)
-            data_cut = Cutout2D(data, position=(x0,y0), size=(size,size), \
+            # size     = int(A[i]*KrRadDet[i]*10)#256#int(2*ISOarea[i])
+            size = int(320)
+            # print("Image size of >>",size)
+            data_cut = Cutout2D(data, position=(x0[i],y0[i]), size=(size,size),\
                 wcs=wcs)
             hdu[1].data = data_cut.data
             hdu[1].header.update(data_cut.wcs.to_header())
+
             your_save_path = "your_save_path"
             #preserve WCS.
             pf.writeto(your_save_path+IDs[i]+'_'+band+'.fits',data_cut.data, \
                 header=hdu[1].header,overwrite=True)
+
     except:
-        print("Field missing")
-    # plt.imshow(np.log(data_cut.data))
-    # plt.show()
-    # return data_cut
+        print("An error ocurred for field ", field," or ID inside it.")
+
+
 
 STRIPES = ["STRIPE82-0001","STRIPE82-0002","STRIPE82-0003","STRIPE82-0004","STRIPE82-0005",
            "STRIPE82-0006","STRIPE82-0007","STRIPE82-0008","STRIPE82-0009","STRIPE82-0010",
@@ -136,7 +111,9 @@ STRIPES = ["STRIPE82-0001","STRIPE82-0002","STRIPE82-0003","STRIPE82-0004","STRI
            "STRIPE82-0166","STRIPE82-0167","STRIPE82-0168","STRIPE82-0169","STRIPE82-0170"]
 
 
-file = 'galaxies_data_table.csv'
-band = "U"
-for STRIPE in STRIPES:
-    get_gal_multiple(STRIPE,"U",file)
+
+file = 'table_splus.csv'
+BAND = ['R']
+for band in BAND:
+    for STRIPE in STRIPES:
+        get_gal_multiple(STRIPE,'R',file=file)
