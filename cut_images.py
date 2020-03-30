@@ -59,7 +59,7 @@ def convert_input_file_to_comma_separated(File):
 
 
 
-def get_gal_multiple(field,band,file):
+def get_gal_multiple(field,band,file,save_plot = False):
     f = file
     IDs      =getstr('ID',f)
     fields = getstr('#FIELD',f)
@@ -95,8 +95,7 @@ def get_gal_multiple(field,band,file):
             pf.writeto(save_path+band+'/'+IDs[i]+'_'+band+'.fits',data_cut.data, \
                 header=hdu[1].header,overwrite=True)
 
-            plot_and_save = True
-            if plot_and_save is True:
+            if save_plot is True:
                 if not os.path.exists(save_path+band+'/figs/'):
                     os.makedirs(save_path+band+'/figs/')
                 fimshow.imshow(((data_cut.data)),sigma=1.5,contours=0,bar=True)
