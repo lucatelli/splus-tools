@@ -46,7 +46,7 @@ def get_stripes(STRIPE,band):
     """
     Assuming that all url's (root_url) are in the same format.
     """
-    path_to_save = "your_path"
+    path_to_save = ""
     root_url = "http://datalab.noao.edu/svc/cutout?col=splus_dr1&siaRef="
     url = root_url + str(STRIPE) + "_" + str(band) + "_swp.fz"
     print("Downloading  "+STRIPE+" from "+url)
@@ -62,11 +62,11 @@ bands = ["G","I","R","U","Z","F861","F660","F515","F430","F410","F395","F378"]
 NProc = 4
 #the number of your computer threads. But in this case,
 #since downloading does not require cpupower, set to
-#the number of bands.
+#the number of bands, for example.
 
 pool = multiprocessing.Pool( NProc )
 tasks = []
-for STRIPE in STRIPES[136:140]:
+for STRIPE in STRIPES:
     for band in bands:
 	    tasks.append((STRIPE,band))
 
