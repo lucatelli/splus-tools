@@ -38,9 +38,20 @@ def getstr(string,File):
     return np.loadtxt(File,dtype='str',usecols=(ind),comments="#", \
         delimiter=",", unpack=False)
 
+def convert_input_file_to_comma_separated(File):
+    """
+    If the data of the input file is space separated (single, multi or tab),
+    this function will try to convert it to comma separated values.
 
+    NOTE: I need to implement properly this function.
+    """
+    import pandas as pd
+    d = pd.read_csv(File,delim_whitespace=True)
+    new_File = File+"_pandas.csv"
+    d.to_csv(new_File, sep=",",index=False)
+    return new_Fil
 
-def get_gal_single(ID,band,file,size=256,show=False):
+def get_gal_single(ID,band,file,size=256):
     """
     Use this function to obtain a specific object id.
 
@@ -49,6 +60,8 @@ def get_gal_single(ID,band,file,size=256,show=False):
     import cut_images as cuti
 
     file = your_galaxy_table.csv
+    # e.g. > SPLUS_SQGTool_DR1_mag-17_p_gal_sw_0.7-1.0.csv
+
     #In S-PLUS standard tables. Please, modify \
     #bellow the variables and labels as you need for other tables.
 
@@ -56,22 +69,22 @@ def get_gal_single(ID,band,file,size=256,show=False):
 
     #Note that the target need to be in the table.
 
-    cuti.get_gal_single(target,"R",file=file,show=True)
+    data = cuti.get_gal_single(target,"R",file=file,show=True)
 
     """
     f = file
     IDs      = getstr('ID',f)
     idx      = np.where(IDs==ID)[0]
+    # print IDs
     field    = getstr('#FIELD',f)[idx][0]
-    x0       = getpmodels(param='X',File=f)[idx]
-    y0       = getpmodels(param='Y',File=f)[idx]
-    # ISOarea  = getpmodels(param='ISOarea',File=f)[idx]
+    # print field
+    x0       = get_data(param='X',File=f)[idx]
+    y0       = get_data(param='Y',File=f)[idx]
+    # ISOarea  = get_data(param='ISOarea',File=f)[idx]
     # size     = 256#int(2*ISOarea)
-
-    your_path_do_data = "STRIPES/" #insert the path to data.
-    file_fits = your_path_do_data+field+'_'+band+'_swp.fits'
+    base = "" #the SPLUS fields folder.
+    file_fits = base+field+'_'+band+'_swp.fits'
     print(file_fits)
-
     hdu = pf.open(file_fits)
     wcs = WCS(hdu[1].header)
     data = hdu[1].data
@@ -79,14 +92,13 @@ def get_gal_single(ID,band,file,size=256,show=False):
     hdu[1].data = data_cut.data
     hdu[1].header.update(data_cut.wcs.to_header())
 
-    your_save_path = "your_save_path"
-    pf.writeto(your_save_path+ID+'_'+band+'.fits',data_cut.data, \
+    save_path = "splus_cuts/"
+    pf.writeto(save_path+ID+'_'+band+'.fits',data_cut.data, \
         header=hdu[1].header,overwrite=True)
-
-    if show is True:
-        plt.imshow(np.log(abs(data_cut.data)))
-        plt.show()
-        plt.clf()
-        plt.close()
-
+    # plt.imshow(np.log(data_cut.data))
+    # plt.show()
     return data_cut
+
+file = "your_galaxy_table.csv"
+target = "SPLUS.STRIPE82-0170.35936.griz"#example
+data = get_gal_single(target,"R",file=file,show=True)
