@@ -159,7 +159,7 @@ try:
     fields = getstr(File=file,string='#FIELD')
 except:
     fields = []
-    for i in range(1,len(IDs)):
+    for i in range(0,len(IDs)):
         fields.append(IDs[i][6:19])#Drop the IDs of the objects, get only field.
     fields = np.asarray(fields)
 
