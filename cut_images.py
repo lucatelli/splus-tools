@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Date = '2020 02 12'
+Date = '2020 04 08'
 Geferson Lucatelli
+There is an improvement in this code.
 """
 from __future__ import division
 import numpy as np
@@ -14,7 +15,7 @@ import imshow_func as fimshow
 import os
 
 
-def get_data(param=None,File=None,HEADER=0):
+def get_data(File,param=None,HEADER=0):
     """
     Get a numerical variable from a table.
 
@@ -25,13 +26,14 @@ def get_data(param=None,File=None,HEADER=0):
     header=firstLine.split(',')
     if HEADER==1:
         print(header)
+        return(header)
     else:
         ind=header.index(param)
         return np.loadtxt(File,usecols=(ind),comments="#", delimiter=",", \
             unpack=False)
 
 
-def getstr(string,File):
+def getstr(File,string=None,HEADER=0):
     """
     Get a string variable from a table.
     May work for float as well.
@@ -39,8 +41,12 @@ def getstr(string,File):
     infile = open(File, 'r')
     firstLine = infile.readline()
     header=firstLine.split(',')
-    ind=header.index(string)
-    return np.loadtxt(File,dtype='str',usecols=(ind),comments="#", \
+    if HEADER==1:
+        print(header)
+        return(header)
+    else:
+        ind=header.index(string)
+        return np.loadtxt(File,dtype='str',usecols=(ind),comments="#", \
         delimiter=",", unpack=False)
 
 
@@ -57,37 +63,23 @@ def convert_input_file_to_comma_separated(File):
     d.to_csv(new_File, sep=",",index=False)
     return new_File
 
-
-
-def get_gal_multiple(field,band,file,save_plot = False):
-    f = file
-    IDs      =getstr('ID',f)
-    fields = getstr('#FIELD',f)
+def get_gal_multiple(field,band,fields,IDs,x0,y0,base,save_path):
+    """
+    Perform the cut task for each galaxy ID inside each field.
+    """
     idx = np.where(fields==field)[0]
-    save_path = "splus_cuts/"
-    base = ""
-
-    if not os.path.exists(save_path+band):
-        os.makedirs(save_path+band)
 
     try:
-        # your_path_do_data = "STRIPES/"
-        # file_fits = your_path_do_data+field+'_'+band+'_swp.fits'
+        #read the FIELD.fits file
         file_fits = base+field+'_'+band+'_swp.fits'
         print("Reading File...:", file_fits)
         hdu  = pf.open(file_fits)
         wcs  = WCS(hdu[1].header)
         data = hdu[1].data
-        x0   = get_data(param='X',File=f)
-        y0   = get_data(param='Y',File=f)
-        # ISOarea  = get_data(param='ISOarea',File=f)
-        # KrRadDet = get_data(param='KrRadDet',File=f)
-        # A        = get_data(param='A',File=f)
+        size = int(128)
+
         for i in idx:
             print("Cut task for >> ", IDs[i])
-            # size     = int(A[i]*KrRadDet[i]*5)
-            size = int(256)
-            # print("Image size of >>",size)
             data_cut = Cutout2D(data, position=(x0[i],y0[i]), size=(size,size), \
                 wcs=wcs)
             hdu[1].data = data_cut.data
@@ -95,21 +87,21 @@ def get_gal_multiple(field,band,file,save_plot = False):
             pf.writeto(save_path+band+'/'+IDs[i]+'_'+band+'.fits',data_cut.data, \
                 header=hdu[1].header,overwrite=True)
 
-            if save_plot is True:
+
+            plot_and_save = False
+            if plot_and_save is True:
                 if not os.path.exists(save_path+band+'/figs/'):
                     os.makedirs(save_path+band+'/figs/')
-                fimshow.imshow(((data_cut.data)),sigma=1.5,contours=0,bar=True)
+                fimshow.imshow((np.log(data_cut.data)),sigma=5.5,contours=0,bar=True)
                 plt.gray()
                 plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.svg', bbox_inches='tight')
-                plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.png',dpi=150, bbox_inches='tight')
+                # plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.png',dpi=150, bbox_inches='tight')
                 plt.clf()
                 plt.close()
 
 
     except:
-        print("An error ocurred for field ", field,".")
-
-
+        print("An error ocurred for field ", field)
 
 
 STRIPES = ["STRIPE82-0001","STRIPE82-0002","STRIPE82-0003","STRIPE82-0004","STRIPE82-0005",
@@ -148,9 +140,43 @@ STRIPES = ["STRIPE82-0001","STRIPE82-0002","STRIPE82-0003","STRIPE82-0004","STRI
            "STRIPE82-0166","STRIPE82-0167","STRIPE82-0168","STRIPE82-0169","STRIPE82-0170"]
 
 
+# file = 'table_splus.csv'
+file_path = "path_to_table_file" #table with ID and (X,Y) positions.
+file_name = "name_of_the_file.csv"
+file = file_path + file_name
 
-file = 'table_splus.csv'
+save_path = "path_to_where_to_save_the_stamps/"+file_name.replace(".csv","")+"/"
+
+#where your FIELDs files are located.
+base = "path_to_fields/" #e.g. /media/data/SPLUS_fields/
+
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
+
+IDs    = getstr(File=file,string='#ID')
+
+try:
+    fields = getstr(File=file,string='#FIELD')
+except:
+    fields = []
+    for i in range(1,len(IDs)):
+        fields.append(IDs[i][6:19])#Drop the IDs of the objects, get only field.
+    fields = np.asarray(fields)
+
+x0     = get_data(File=file,param='X')
+
+try:
+    y0     = get_data(File=file,param='Y')
+except:
+    #in case Y is at the last collum.
+    y0     = get_data(File=file,param='Y\n')
+
 BAND = ['R','G','I','Z','U','F378','F395','F410','F430','F515','F660','F861']
+#do the loop for each object in 'file' and for each filter 'band'.
 for band in BAND:
-    for STRIPE in STRIPES:
-        get_gal_multiple(STRIPE,band,file=file)
+
+    if not os.path.exists(save_path+band):
+        os.makedirs(save_path+band)
+
+    for field in STRIPES:
+        get_gal_multiple(field,band,fields,IDs,x0,y0,base,save_path)
