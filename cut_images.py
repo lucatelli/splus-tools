@@ -1,19 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Date = '2020 04 08'
+Date = '2020 05 22'
 Geferson Lucatelli
 There is an improvement in this code.
 """
 from __future__ import division
 import numpy as np
+import pylab as pl
 import astropy.io.fits as pf
 import matplotlib.pyplot as plt
 from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
-import imshow_func as fimshow
 import os
-
+import warnings
+warnings.filterwarnings("ignore")
+from progress.bar import Bar
 
 def get_data(File,param=None,HEADER=0):
     """
@@ -49,6 +51,45 @@ def getstr(File,string=None,HEADER=0):
         return np.loadtxt(File,dtype='str',usecols=(ind),comments="#", \
         delimiter=",", unpack=False)
 
+def _imshow(img, sigma=3, contours=0, bar=None, aspect='equal', extent=None, vmin=None, vmax=None, use_median=False):
+    """
+    improved version of pl.imshow,
+
+    shows image with limits sigma above and below mean.
+
+    optionally show contours and colorbar
+    """
+
+    def mad(x):
+       return np.median( np.abs( x - np.median(x)) )
+
+    # deals with NaN and Infinity
+    img[np.where(np.isnan(img))]=0.0
+    img[np.where(np.isinf(img))]=0.0
+
+
+    # wether to use median/mad or mean/stdev.
+    # note that mad ~ 1.5 stdev
+    if use_median==False:
+      if vmin==None:
+         vmin = img.mean() - sigma * img.std()
+      if vmax==None:
+         vmax = img.mean() + sigma * img.std()
+    else:
+      if vmin==None:
+         vmin = np.median(img) - 1.5*sigma * mad(img)
+      if vmax==None:
+         vmax = np.median(img) + 1.5*sigma * mad(img)
+
+
+    pl.imshow(img, vmin=vmin, vmax=vmax, origin='lower', aspect=aspect, extent=extent, interpolation=None)
+
+    if bar != None:
+        pl.colorbar(pad=0)
+
+    if contours >0:
+        pl.contour(img, contours, colors='k', linestyles='solid', aspect=aspect, extent=extent)
+
 
 def convert_input_file_to_comma_separated(File):
     """
@@ -68,7 +109,7 @@ def get_gal_multiple(field,band,fields,IDs,x0,y0,base,save_path):
     Perform the cut task for each galaxy ID inside each field.
     """
     idx = np.where(fields==field)[0]
-
+    bar = Bar('', max=len(idx))
     try:
         #read the FIELD.fits file
         file_fits = base+field+'_'+band+'_swp.fits'
@@ -76,10 +117,11 @@ def get_gal_multiple(field,band,fields,IDs,x0,y0,base,save_path):
         hdu  = pf.open(file_fits)
         wcs  = WCS(hdu[1].header)
         data = hdu[1].data
-        size = int(128)
+        size = int(256)
+        print("Creating",len(idx), "stamps in field",field)
 
         for i in idx:
-            print("Cut task for >> ", IDs[i])
+            # print("Cut task for >> ", IDs[i])
             data_cut = Cutout2D(data, position=(x0[i],y0[i]), size=(size,size), \
                 wcs=wcs)
             hdu[1].data = data_cut.data
@@ -92,16 +134,17 @@ def get_gal_multiple(field,band,fields,IDs,x0,y0,base,save_path):
             if plot_and_save is True:
                 if not os.path.exists(save_path+band+'/figs/'):
                     os.makedirs(save_path+band+'/figs/')
-                fimshow.imshow((np.log(data_cut.data)),sigma=5.5,contours=0,bar=True)
+                _imshow((np.log(data_cut.data)),sigma=5.5,contours=0,bar=True)
                 plt.gray()
                 plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.svg', bbox_inches='tight')
                 # plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.png',dpi=150, bbox_inches='tight')
                 plt.clf()
                 plt.close()
-
+            bar.next()
 
     except:
         print("An error ocurred for field ", field)
+    bar.finish()
 
 
 STRIPES = ["STRIPE82-0001","STRIPE82-0002","STRIPE82-0003","STRIPE82-0004","STRIPE82-0005",
@@ -145,6 +188,7 @@ file_path = "path_to_table_file" #table with ID and (X,Y) positions.
 file_name = "name_of_the_file.csv"
 file = file_path + file_name
 
+#where to save the stamps
 save_path = "path_to_where_to_save_the_stamps/"+file_name.replace(".csv","")+"/"
 
 #where your FIELDs files are located.
@@ -170,8 +214,9 @@ try:
 except:
     #in case Y is at the last collum.
     y0     = get_data(File=file,param='Y\n')
+# print(IDs[82])
+BAND = ["R",'G','I','Z','U','F378','F395','F410','F430','F515','F660','F861']
 
-BAND = ['R','G','I','Z','U','F378','F395','F410','F430','F515','F660','F861']
 #do the loop for each object in 'file' and for each filter 'band'.
 for band in BAND:
 
