@@ -1,6 +1,23 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
+ _______          _________   _______  ______  
+(  ____ \|\     /|\__   __/  / ___   )(  __  \ 
+| (    \/| )   ( |   ) (     \/   )  || (  \  )
+| |      | |   | |   | |         /   )| |   ) |
+| |      | |   | |   | |       _/   / | |   | |
+| |      | |   | |   | |      /   _/  | |   ) |
+| (____/\| (___) |   | |     (   (__/\| (__/  )
+(_______/(_______)   )_(     \_______/(______/ 
+ _______         _______  _                 _______ 
+(  ____ \       (  ____ )( \      |\     /|(  ____ \
+| (    \/       | (    )|| (      | )   ( || (    \/
+| (_____  _____ | (____)|| |      | |   | || (_____ 
+(_____  )(_____)|  _____)| |      | |   | |(_____  )
+      ) |       | (      | |      | |   | |      ) |
+/\____) |       | )      | (____/\| (___) |/\____) |
+\_______)       |/       (_______/(_______)\_______)
+
 Date = '2020 05 22'
 Geferson Lucatelli
 There is an improvement in this code.
@@ -122,26 +139,28 @@ def get_gal_multiple(field,band,fields,IDs,x0,y0,base,save_path):
 
         for i in idx:
             # print("Cut task for >> ", IDs[i])
-            data_cut = Cutout2D(data, position=(x0[i],y0[i]), size=(size,size), \
-                wcs=wcs)
-            hdu[1].data = data_cut.data
-            hdu[1].header.update(data_cut.wcs.to_header())
-            pf.writeto(save_path+band+'/'+IDs[i]+'_'+band+'.fits',data_cut.data, \
-                header=hdu[1].header,overwrite=True)
+            try:
+                data_cut = Cutout2D(data, position=(x0[i],y0[i]), size=(size,size), \
+                    wcs=wcs)
+                hdu[1].data = data_cut.data
+                hdu[1].header.update(data_cut.wcs.to_header())
+                pf.writeto(save_path+band+'/'+IDs[i]+'_'+band+'.fits',data_cut.data, \
+                    header=hdu[1].header,overwrite=True)
 
 
-            plot_and_save = False
-            if plot_and_save is True:
-                if not os.path.exists(save_path+band+'/figs/'):
-                    os.makedirs(save_path+band+'/figs/')
-                _imshow((np.log(data_cut.data)),sigma=5.5,contours=0,bar=True)
-                plt.gray()
-                plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.svg', bbox_inches='tight')
-                # plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.png',dpi=150, bbox_inches='tight')
-                plt.clf()
-                plt.close()
-            bar.next()
-
+                plot_and_save = False
+                if plot_and_save is True:
+                    if not os.path.exists(save_path+band+'/figs/'):
+                        os.makedirs(save_path+band+'/figs/')
+                    _imshow((np.log(data_cut.data)),sigma=5.5,contours=0,bar=True)
+                    plt.gray()
+                    plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.svg', bbox_inches='tight')
+                    # plt.savefig(save_path+band+'/figs/'+IDs[i]+'_'+band+'.png',dpi=150, bbox_inches='tight')
+                    plt.clf()
+                    plt.close()
+                bar.next()
+            except:
+                print("Error in ID=",IDs[i])
     except:
         print("An error ocurred for field ", field)
     bar.finish()
@@ -183,21 +202,23 @@ STRIPES = ["STRIPE82-0001","STRIPE82-0002","STRIPE82-0003","STRIPE82-0004","STRI
            "STRIPE82-0166","STRIPE82-0167","STRIPE82-0168","STRIPE82-0169","STRIPE82-0170"]
 
 
-# file = 'table_splus.csv'
-file_path = "path_to_table_file" #table with ID and (X,Y) positions.
-file_name = "name_of_the_file.csv"
+# file = 'cut_FULL_SAMPLE.csv'
+file_path = "/home/lucatelli/Documents/"
+file_name = "cut_FULL_SAMPLE.csv"
 file = file_path + file_name
 
 #where to save the stamps
-save_path = "path_to_where_to_save_the_stamps/"+file_name.replace(".csv","")+"/"
+# save_path = "path_to_where_to_save_the_stamps/"+file_name.replace(".csv","")+"/"
+save_path = "/run/media/lucatelli/storage_wd_2/"+""+file_name.replace(".csv","")+"/"
 
 #where your FIELDs files are located.
-base = "path_to_fields/" #e.g. /media/data/SPLUS_fields/
+# base = "path_to_fields/" #e.g. /media/data/SPLUS_fields/
+base = "/run/media/lucatelli/data/data/splus/STRIPES/STRIPE82_fields/" #this is for my computer
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-IDs    = getstr(File=file,string='#ID')
+IDs    = getstr(File=file,string='ID')
 
 try:
     fields = getstr(File=file,string='#FIELD')
@@ -214,8 +235,9 @@ try:
 except:
     #in case Y is at the last collum.
     y0     = get_data(File=file,param='Y\n')
-# print(IDs[82])
-BAND = ["R",'G','I','Z','U','F378','F395','F410','F430','F515','F660','F861']
+
+# BAND = ["R",'G','I','Z','U','F378','F395','F410','F430','F515','F660','F861']
+BAND = ["R"]
 
 #do the loop for each object in 'file' and for each filter 'band'.
 for band in BAND:
