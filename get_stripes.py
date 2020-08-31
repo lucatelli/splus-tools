@@ -54,6 +54,7 @@ def get_stripes(STRIPE,band):
     with open(path_to_save+STRIPE+"_"+band+"_swp.fits",'wb') as f:
         f.write(r.content)
     f.close()
+    return(r.content)
 
 
 bands = ["G","I","R","U","Z","F861","F660","F515","F430","F410","F395","F378"]
