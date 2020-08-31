@@ -204,7 +204,7 @@ STRIPES = ["STRIPE82-0001","STRIPE82-0002","STRIPE82-0003","STRIPE82-0004","STRI
 
 # file = 'cut_FULL_SAMPLE.csv'
 file_path = "/home/lucatelli/Documents/"
-file_name = "cut_FULL_SAMPLE.csv"
+file_name = "example.csv"
 file = file_path + file_name
 
 #where to save the stamps

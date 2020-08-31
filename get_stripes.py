@@ -50,17 +50,28 @@ def get_stripes(STRIPE,band):
     root_url = "http://datalab.noao.edu/svc/cutout?col=splus_dr1&siaRef="
     url = root_url + str(STRIPE) + "_" + str(band) + "_swp.fz"
     print("Downloading  "+STRIPE+" from "+url)
-    r = requests.get(url)
-    with open(path_to_save+STRIPE+"_"+band+"_swp.fits",'wb') as f:
-        f.write(r.content)
-    f.close()
-    return(r.content)
+    try:
+        r = requests.get(url)
+        with open(path_to_save+STRIPE+"_"+band+"_swp.fits",'wb') as f:
+            f.write(r.content)
+        f.close()
+        return(r.content)
+    except:
+        try:
+            r = requests.get(url)
+            with open(path_to_save+STRIPE+"_"+band+"_swp.fits",'wb') as f:
+                f.write(r.content)
+            f.close()
+            return(r.content)
+        except:
+            print("Error downloading field",STRIPE,'in a second try.')
+            return("Error")
 
 
 bands = ["G","I","R","U","Z","F861","F660","F515","F430","F410","F395","F378"]
 
 
-NProc = 4
+NProc = 6
 #the number of your computer threads. But in this case,
 #since downloading does not require cpupower, set to
 #the number of bands, for example.

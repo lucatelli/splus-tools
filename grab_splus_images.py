@@ -94,12 +94,7 @@ dec     = get_data(File=file,param='Dec')
 
 
 # BAND = ["R",'G','I','Z','U','F378','F395','F410','F430','F515','F660','F861']
-BAND = ["G","R","I","F660"]
-
-
-
-
-
+BAND = ["G","R","I"]
 
 
 
@@ -118,14 +113,14 @@ def get_images_ra_dec(STRIPE,ID,ra,dec,band,path_to_save = ""):
     # &extn=1&POS=1.0296,-0.8641&SIZE=0.0389565,0.0389565&preview=false
     # print("Downloading Image (ra,dec)=(",ra,dec,") in "+STRIPE+" from "+url_pos)
     try:
-        r = requests.get(url_pos,verify=True,timeout=10)
+        r = requests.get(url_pos,verify=True,timeout=1500)
         # with open(path_to_save+"SPLUS."+STRIPE+"-"+ID+".griz_"+band+".fits",'wb') as f:
         with open(path_to_save+band+"/"+ID+"_"+band+".fits",'wb') as f:
             f.write(r.content)
         f.close()
     except:
         try:
-            r = requests.get(url_pos,verify=True,timeout=10)
+            r = requests.get(url_pos,verify=True,timeout=1500)
             # with open(path_to_save+"SPLUS."+STRIPE+"-"+ID+".griz_"+band+".fits",'wb') as f:
             with open(path_to_save+band+"/"+ID+"_"+band+".fits",'wb') as f:
                 f.write(r.content)
