@@ -51,14 +51,14 @@ def get_stripes(STRIPE,band):
     url = root_url + str(STRIPE) + "_" + str(band) + "_swp.fz"
     print("Downloading  "+STRIPE+" from "+url)
     try:
-        r = requests.get(url)
+        r = requests.get(url,verify=True,timeout=1500)
         with open(path_to_save+STRIPE+"_"+band+"_swp.fits",'wb') as f:
             f.write(r.content)
         f.close()
         return(r.content)
     except:
         try:
-            r = requests.get(url)
+            r = requests.get(url,verify=True,timeout=1500)
             with open(path_to_save+STRIPE+"_"+band+"_swp.fits",'wb') as f:
                 f.write(r.content)
             f.close()
