@@ -46,7 +46,7 @@ def get_stripes(STRIPE,band):
     """
     Assuming that all url's (root_url) are in the same format.
     """
-    path_to_save = ""
+    path_to_save = "/run/media/lucatelli/storage_wd_2/SPLUS-FIELDS/"
     root_url = "http://datalab.noao.edu/svc/cutout?col=splus_dr1&siaRef="
     url = root_url + str(STRIPE) + "_" + str(band) + "_swp.fz"
     print("Downloading  "+STRIPE+" from "+url)
@@ -68,7 +68,8 @@ def get_stripes(STRIPE,band):
             return("Error")
 
 
-bands = ["G","I","R","U","Z","F861","F660","F515","F430","F410","F395","F378"]
+# bands = ["G","I","R","U","Z","F861","F660","F515","F430","F410","F395","F378"]
+bands = ['R']
 
 
 NProc = 6
