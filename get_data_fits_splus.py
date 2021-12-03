@@ -53,6 +53,8 @@ warnings.filterwarnings("ignore")
 name = getpass.getpass(prompt='Username Login at S-PLUS cloud:')
 password = getpass.getpass(prompt='Password:')
 
+
+conn = splusdata.connect(name, password) ## from splus.cloud
 tt = conn.get_tap_tables()
 
 def grab_images():
@@ -166,7 +168,7 @@ def grab_images():
         at once. However, connection stability may prevent you to download the
         data properly. Also, it may overload the the servers. I tested
         with NProc=16 and it seems to be working fine.
-        For example, to download ~18000 images (256x256), it takes about 30minutes.
+        For example, to download ~18000 images (256x256), it takes about 30-60minutes.
         """
         shift = 0#0.00194444
         NProc = 32
